@@ -1,55 +1,47 @@
 #include "main.h"
 
 /**
- * _printf - function produces output according to a format.
- * @format: is a pointer to string
- * Return: is the count of printed characters
+ * _printf - produces output according to a format
+ * @format: format string containing the characters and the specifiers
+ * Description: this function will call the get_print() function that will
+ * determine which printing function to call depending on the conversion
+ * specifiers contained into fmt
+ * Return: length of the formatted output string
  */
-
 int _printf(const char *format, ...)
 {
-	const char *string;
+	int (*pfunc)(va_list, flags_t *);
+	const char *p;
+	va_list arguments;
+	flags_t flags = {0, 0, 0};
 
-	int count = 0;
+	register int count = 0;
 
-	va_list args;
-
-	if (!format)
+	va_start(arguments, format);
+	if (!format || (format[0] == '%' && !format[1]))
 		return (-1);
-
-	va_start(args, format);
-	string = format;
-
-	count = loop_format(format, args);
-
-	va_end(args);
-
-	return (count);
-}
-
-/**
- * loop_format - function is to print format
- * @format: is a pointer to string
- * @args: is a va_list args
- * Return: is an integer.
- */
-
-int loop_format(const char *format, va_list args)
-{
-	int i = 0, counter = 0;
-
-	while (i < _strlen(format) && *format != '\0')
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
+		return (-1);
+	for (p = format; *p; p++)
 	{
-		char charac = format[i];
-
-		if (charac == '%')
+		if (*p == '%')
 		{
-
-		}
-		else
-		{
-			counter += _putchar(charac);
-		}
+			p++;
+			if (*p == '%')
+			{
+				count += _putchar('%');
+				continue;
+			}
+			while (get_flag(*p, &flags))
+				p++;
+			pfunc = get_print(*p);
+			count += (pfunc)
+				? pfunc(arguments, &flags)
+				: _printf("%%%c", *p);
+		} else
+			count += _putchar(*p);
 	}
-	return (counter);
+	_putchar(-1);
+	va_end(arguments);
+	return (count);
 }
